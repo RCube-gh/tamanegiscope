@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import json
+import mimetypes
+import re
 import socket
 import uuid
 from datetime import UTC, datetime
@@ -12,11 +14,62 @@ from urllib.parse import urlsplit
 from playwright.async_api import async_playwright
 
 from app.config import SCAN_TIMEOUT_MS, TOR_SOCKS_URL, artifact_root
-from app.models import NetworkMode, QuickScanRequest, QuickScanResult
+from app.models import ArtifactInfo, NetworkMode, QuickScanRequest, QuickScanResult, ScanArtifacts
 
 
 class TargetValidationError(ValueError):
     pass
+
+
+class ScanNotFoundError(FileNotFoundError):
+    pass
+
+
+SCAN_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
+
+
+def scan_directory(scan_id: str) -> Path:
+    """Resolve a scan directory without allowing path traversal."""
+    if not SCAN_ID_PATTERN.fullmatch(scan_id):
+        raise ScanNotFoundError(scan_id)
+
+    directory = artifact_root() / scan_id
+    if not directory.is_dir():
+        raise ScanNotFoundError(scan_id)
+    return directory
+
+
+def load_scan_result(scan_id: str) -> QuickScanResult:
+    metadata = scan_directory(scan_id) / "metadata.json"
+    try:
+        data = json.loads(metadata.read_text(encoding="utf-8"))
+    except FileNotFoundError as error:
+        raise ScanNotFoundError(scan_id) from error
+    data.pop("created_at", None)
+    return QuickScanResult.model_validate(data)
+
+
+def list_artifacts(scan_id: str) -> ScanArtifacts:
+    directory = scan_directory(scan_id)
+    artifacts = []
+    for path in directory.rglob("*"):
+        if not path.is_file() or path.is_symlink():
+            continue
+        artifacts.append(
+            ArtifactInfo(
+                name=path.relative_to(directory).as_posix(),
+                size_bytes=path.stat().st_size,
+                media_type=mimetypes.guess_type(path.name)[0],
+            )
+        )
+    return ScanArtifacts(scan_id=scan_id, artifacts=sorted(artifacts, key=lambda artifact: artifact.name))
+
+
+def scan_artifact(scan_id: str, name: str) -> Path:
+    path = scan_directory(scan_id) / name
+    if not path.is_file() or path.is_symlink():
+        raise ScanNotFoundError(scan_id)
+    return path
 
 
 def resolve_network(url: str, requested: NetworkMode) -> NetworkMode:

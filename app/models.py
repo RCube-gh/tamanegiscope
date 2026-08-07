@@ -29,3 +29,14 @@ class QuickScanResult(BaseModel):
     html_sha256: str | None = None
     links_count: int | None = None
     error: str | None = None
+
+
+class ArtifactInfo(BaseModel):
+    name: str
+    size_bytes: int
+    media_type: str | None = None
+
+
+class ScanArtifacts(BaseModel):
+    scan_id: str
+    artifacts: list[ArtifactInfo]
