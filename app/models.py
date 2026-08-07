@@ -1,0 +1,31 @@
+from __future__ import annotations
+
+from enum import StrEnum
+
+from pydantic import BaseModel, Field
+
+
+class NetworkMode(StrEnum):
+    AUTO = "auto"
+    DIRECT = "direct"
+    TOR = "tor"
+
+
+class QuickScanRequest(BaseModel):
+    url: str = Field(min_length=1, max_length=8_192)
+    network: NetworkMode = NetworkMode.AUTO
+
+
+class QuickScanResult(BaseModel):
+    scan_id: str
+    scan_type: str = "quick"
+    network: NetworkMode
+    reachable: bool
+    status: int | None = None
+    title: str | None = None
+    final_url: str | None = None
+    screenshot_path: str | None = None
+    html_path: str | None = None
+    html_sha256: str | None = None
+    links_count: int | None = None
+    error: str | None = None

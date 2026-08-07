@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+.agents/
+
+# Scan artifacts must stay outside the source repository.
+scans/
+artifacts/
+downloads/
+*.log
