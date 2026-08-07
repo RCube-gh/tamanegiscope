@@ -26,6 +26,10 @@ GET  /scans/{scan_id}/html
 
 The scan result can be read again using its `scan_id`. `screenshot` is returned as a PNG. The captured `html` endpoint deliberately returns `text/plain`, so the captured page cannot execute in the browser that views the artifact.
 
+## Web UI
+
+`/` serves the Quick Scan interface. The browser UI calls the same API endpoints listed above; it does not run a separate scan implementation. It displays captured HTML only through the plain-text artifact endpoint.
+
 ## Running in the runner
 
 After the Codespace has built its dev container and installed its dependencies:

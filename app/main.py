@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.models import QuickScanRequest, QuickScanResult, ScanArtifacts
 from app.scanner import (
@@ -12,6 +15,13 @@ from app.scanner import (
 )
 
 app = FastAPI(title="TamanegiScope", version="0.1.0")
+WEB_ROOT = Path(__file__).resolve().parent / "web"
+app.mount("/static", StaticFiles(directory=WEB_ROOT / "static"), name="static")
+
+
+@app.get("/", include_in_schema=False)
+async def web_ui() -> FileResponse:
+    return FileResponse(WEB_ROOT / "index.html")
 
 
 @app.get("/health")

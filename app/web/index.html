@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TamanegiScope</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script defer src="/static/app.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <p class="eyebrow">CLOUD-ISOLATED WEB OBSERVATION</p>
+        <h1>TamanegiScope</h1>
+        <p class="subtitle">Quick Scan runs the target in the remote runner, then returns its captured artifacts.</p>
+      </header>
+
+      <section class="panel" aria-labelledby="scan-heading">
+        <div class="section-heading">
+          <h2 id="scan-heading">Quick Scan</h2>
+          <span class="status-dot" id="api-status">API checking</span>
+        </div>
+        <form id="scan-form">
+          <label for="target-url">Target URL</label>
+          <input id="target-url" name="url" type="url" required autocomplete="off" placeholder="https://example.com or http://…onion">
+
+          <label for="network">Network</label>
+          <select id="network" name="network">
+            <option value="auto">Auto</option>
+            <option value="direct">Direct</option>
+            <option value="tor">Tor</option>
+          </select>
+
+          <button id="scan-button" type="submit">Run Quick Scan</button>
+        </form>
+        <p class="hint">Auto selects Tor for <code>.onion</code> targets and Direct for other HTTP(S) URLs.</p>
+      </section>
+
+      <section class="panel hidden" id="progress-panel" aria-live="polite">
+        <div class="spinner"></div>
+        <p id="progress-message">Creating remote browser session…</p>
+      </section>
+
+      <section class="panel hidden" id="error-panel" role="alert">
+        <h2>Scan could not start</h2>
+        <pre id="error-message"></pre>
+      </section>
+
+      <section class="result hidden" id="result-panel" aria-live="polite">
+        <div class="result-title">
+          <div>
+            <p class="eyebrow">SCAN RESULT</p>
+            <h2 id="result-heading">Result</h2>
+          </div>
+          <span class="pill" id="result-status"></span>
+        </div>
+
+        <dl class="metadata" id="metadata"></dl>
+
+        <div class="artifacts-grid">
+          <section>
+            <h3>Screenshot</h3>
+            <img id="screenshot" alt="Captured page screenshot" class="screenshot">
+          </section>
+          <section>
+            <h3>Artifacts</h3>
+            <ul id="artifact-list" class="artifact-list"></ul>
+            <a id="html-link" class="text-link" target="_blank" rel="noopener">View captured HTML as text</a>
+          </section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
