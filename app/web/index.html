@@ -4,18 +4,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TamanegiScope</title>
-    <link rel="stylesheet" href="/static/styles.css?v=3">
-    <script defer src="/static/app.js?v=3"></script>
+    <link rel="stylesheet" href="/static/styles.css?v=4">
+    <script defer src="/static/app.js?v=4"></script>
   </head>
   <body>
     <main class="shell">
-      <header>
+      <header id="landing-header">
         <p class="eyebrow">CLOUD-ISOLATED WEB OBSERVATION</p>
         <h1>TamanegiScope</h1>
         <p class="subtitle">Quick Scan runs the target in the remote runner, then returns its captured artifacts.</p>
       </header>
 
-      <section class="panel" aria-labelledby="scan-heading">
+      <section class="panel" id="scan-panel" aria-labelledby="scan-heading">
         <div class="section-heading">
           <h2 id="scan-heading">Quick Scan</h2>
           <span class="status-dot" id="api-status">API checking</span>
@@ -52,7 +52,10 @@
             <p class="eyebrow">SCAN RESULT</p>
             <h2 id="result-heading">Result</h2>
           </div>
-          <span class="pill" id="result-status"></span>
+          <div class="result-actions">
+            <span class="pill" id="result-status"></span>
+            <button class="new-scan-button" id="new-scan-button" type="button">New scan</button>
+          </div>
         </div>
 
         <nav class="result-nav" aria-label="Scan result sections">

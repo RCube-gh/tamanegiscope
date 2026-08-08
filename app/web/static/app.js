@@ -117,6 +117,7 @@ form.addEventListener("submit", async (event) => {
     const scan = await response.json();
     await renderResult(scan);
     show(resultPanel, true);
+    document.body.classList.add("showing-result");
   } catch (error) {
     document.querySelector("#error-message").textContent = error.message;
     show(errorPanel, true);
@@ -127,6 +128,12 @@ form.addEventListener("submit", async (event) => {
 });
 
 checkHealth();
+
+document.querySelector("#new-scan-button").addEventListener("click", () => {
+  document.body.classList.remove("showing-result");
+  show(resultPanel, false);
+  document.querySelector("#target-url").focus();
+});
 
 for (const tab of document.querySelectorAll("[data-tab]")) {
   tab.addEventListener("click", () => {
