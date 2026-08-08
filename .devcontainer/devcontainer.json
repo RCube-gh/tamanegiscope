@@ -2,7 +2,7 @@
   "name": "tamanegiscope-runner",
   "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
   "postCreateCommand": "sudo rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarnpkg.list && sudo apt-get update && sudo apt-get install -y --no-install-recommends tor && python -m pip install -r requirements.txt && python -m playwright install --with-deps chromium",
-  "postStartCommand": "pgrep -x tor >/dev/null || (nohup tor >/tmp/tamanegiscope-tor.log 2>&1 &)",
+  "postStartCommand": "bash .devcontainer/start-services.sh",
   "forwardPorts": [8000],
   "portsAttributes": {
     "8000": {
