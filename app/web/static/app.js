@@ -210,9 +210,7 @@ function liveViewerUrl() {
 
 function renderLiveSession(session) {
   activeLiveScanId = session.scan_id;
-  setText("#live-session-id", session.scan_id);
   setText("#live-session-network", session.network);
-  setText("#live-session-url", session.final_url || session.requested_url);
   const link = document.querySelector("#live-browser-link");
   link.href = liveViewerUrl();
   link.textContent = "Open remote browser ↗";
@@ -220,7 +218,9 @@ function renderLiveSession(session) {
 }
 
 function renderLiveObservations(observations) {
-  setText("#live-session-url", observations.current_url);
+  const minutes = Math.floor(observations.elapsed_seconds / 60);
+  const seconds = observations.elapsed_seconds % 60;
+  setText("#live-elapsed", `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`);
   const stats = observations.stats;
   setText("#live-requests", stats.requests);
   setText("#live-domains", stats.domains);
@@ -359,7 +359,7 @@ stopLiveScanButton.addEventListener("click", async () => {
     show(errorPanel, true);
   } finally {
     stopLiveScanButton.disabled = false;
-    stopLiveScanButton.textContent = "Stop & capture session";
+    stopLiveScanButton.textContent = "Stop & capture";
   }
 });
 

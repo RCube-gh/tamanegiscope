@@ -50,28 +50,23 @@
       </section>
 
       <section class="live-session panel hidden" id="live-session-panel" aria-live="polite">
-        <div class="section-heading live-header">
-          <div>
-            <p class="eyebrow">LIVE SCAN ACTIVE</p>
-            <h2>Remote browser is ready</h2>
-          </div>
-          <span class="status-dot online" id="live-session-status">Active</span>
+        <div class="live-toolbar">
+          <span class="live-indicator">● LIVE</span>
+          <span class="live-network" id="live-session-network">—</span>
+          <span class="live-elapsed" id="live-elapsed">00:00</span>
+          <a id="live-browser-link" class="text-link" target="_blank" rel="noopener">Open separately ↗</a>
+          <button id="stop-live-scan-button" class="stop-live-button" type="button">Stop &amp; capture</button>
         </div>
         <div class="live-workspace">
           <section class="live-browser-card">
             <div class="card-title-row">
-              <div><h3>Remote browser</h3><span>Interactive Chromium · remote runner</span></div>
-              <a id="live-browser-link" class="text-link" target="_blank" rel="noopener">Open separately ↗</a>
+              <div><h3>Remote browser</h3><span>Interactive Chromium</span></div>
             </div>
             <iframe id="live-browser-frame" title="Remote Chromium browser" allow="clipboard-read; clipboard-write"></iframe>
           </section>
           <aside class="live-insights">
             <section class="section-card live-overview-card">
-              <div class="card-title-row"><h3>Live observation</h3><span id="live-session-network">—</span></div>
-              <dl class="metadata live-metadata">
-                <dt>Session ID</dt><dd id="live-session-id">—</dd>
-                <dt>Current URL</dt><dd id="live-session-url">—</dd>
-              </dl>
+              <div class="card-title-row"><h3>Live observation</h3><span>Realtime</span></div>
               <div class="live-stat-grid">
                 <div><strong id="live-requests">0</strong><span>Requests</span></div>
                 <div><strong id="live-domains">0</strong><span>Domains</span></div>
@@ -87,10 +82,6 @@
             </section>
           </aside>
         </div>
-        <div class="live-actions">
-          <button id="stop-live-scan-button" class="stop-live-button" type="button">Stop &amp; capture session</button>
-        </div>
-        <p class="hint">The remote browser is displayed through the Codespaces 6080 port. Its activity is recorded until you stop this session.</p>
       </section>
 
       <section class="result hidden" id="result-panel" aria-live="polite">

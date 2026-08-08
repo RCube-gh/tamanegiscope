@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import time
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -45,6 +46,7 @@ class LiveSession:
             final_url=request.url,
         )
         self.status = "starting"
+        self.started_at = time.monotonic()
         self.error: str | None = None
         self.network_events: dict[str, list[dict[str, Any]]] = {
             "requests": [],
@@ -82,7 +84,7 @@ class LiveSession:
         return {
             "scan_id": self.scan_id,
             "status": self.status,
-            "current_url": self.page.url if self.page is not None else self.result.final_url,
+            "elapsed_seconds": int(time.monotonic() - self.started_at),
             "stats": {
                 "requests": len(self.network_events["requests"]),
                 "responses": len(self.network_events["responses"]),
