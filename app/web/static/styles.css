@@ -72,8 +72,8 @@ body.showing-result .analysis-grid > .section-card, body.showing-result .network
 body.showing-result .table-wrap { height: calc(100% - 3rem); overflow: auto; }
 @media (min-width: 1200px) { body.showing-result .dashboard-grid { grid-template-columns: minmax(0, 1.2fr) minmax(34rem, .8fr); } }
 .analysis-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1.25fr) minmax(22rem, .75fr); }
-.network-layout { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1.25fr) minmax(22rem, .75fr); grid-template-rows: auto minmax(0, 1fr); }
-.network-overview-card { grid-column: 1 / -1; padding-bottom: .85rem; }.network-overview-card .breakdown { grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; }.network-overview-card .breakdown > div { min-width: 0; }.network-overview-card .breakdown span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.network-layout { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1.25fr) minmax(22rem, .75fr); grid-template-rows: minmax(8rem, 12rem) minmax(0, 1fr); }
+.network-overview-card { display: grid; grid-column: 1 / -1; grid-template-rows: auto minmax(0, 1fr); padding-bottom: .85rem; }.network-overview-card .breakdown { grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0; overflow: auto; padding-right: .25rem; }.network-overview-card .breakdown > div { min-width: 0; }.network-overview-card .breakdown span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .network-table-card { display: grid; grid-template-rows: auto minmax(0, 1fr); }
 .console-grid { grid-template-columns: minmax(0, 1.2fr) minmax(18rem, .8fr); }
 .table-card { height: 100%; }
