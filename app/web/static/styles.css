@@ -21,8 +21,8 @@ h3 { font-size: .95rem; text-transform: uppercase; letter-spacing: .09em; color:
 .result-header { background: linear-gradient(135deg, rgba(22, 57, 43, .95), rgba(10, 30, 23, .95)); border: 1px solid #35634d; border-radius: 16px 16px 0 0; padding: 1.45rem 1.6rem; }
 .result-header h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); letter-spacing: -.04em; }
 .result-nav { background: #0d241b; border: 1px solid #35634d; border-top: 0; display: flex; gap: .45rem; overflow-x: auto; padding: .65rem 1rem; }
-.result-nav a { border: 1px solid #315c47; border-radius: 7px; color: #a8dac0; font-size: .84rem; font-weight: 700; padding: .5rem .75rem; text-decoration: none; white-space: nowrap; }
-.result-nav a:hover { background: #1c4934; color: #e5fff0; }
+.result-tab { background: transparent; border: 1px solid #315c47; border-radius: 7px; color: #a8dac0; font-size: .84rem; font-weight: 700; margin: 0; padding: .5rem .85rem; white-space: nowrap; }
+.result-tab:hover, .result-tab.active { background: #1c6b47; color: #f2fff6; }
 .status-dot, .pill { border: 1px solid #496f5a; border-radius: 100px; color: #b4c8bb; font-size: .78rem; padding: .35rem .7rem; white-space: nowrap; }
 .status-dot.online, .pill { background: #153d28; color: #83edb1; border-color: #297347; }
 .pill.failure { background: #3d1d21; border-color: #823842; color: #ffafb4; }
@@ -38,9 +38,9 @@ button:hover { background: #90efba; } button:disabled { cursor: wait; opacity: .
 .spinner { width: 1.1rem; height: 1.1rem; border: 2px solid #4b725c; border-top-color: #7cecaa; border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 pre { color: #ffb0b5; overflow-wrap: anywhere; white-space: pre-wrap; }
-.summary-grid, .content-grid { display: grid; gap: 1rem; margin-top: 1rem; }
-.summary-grid { grid-template-columns: minmax(0, 1.3fr) minmax(19rem, .9fr); }
-.content-grid { grid-template-columns: minmax(0, 1.5fr) minmax(17rem, .8fr); }
+.tab-panel { display: none; margin-top: 1rem; }.tab-panel.active { display: block; }
+.dashboard-grid { display: grid; gap: 1rem; grid-template-columns: minmax(25rem, 1.1fr) minmax(25rem, .9fr); }
+.summary-column { display: grid; gap: 1rem; grid-template-rows: 1fr 1fr; }
 .summary-card, .section-card { background: rgba(14, 38, 29, .88); border: 1px solid #315c47; border-radius: 12px; padding: 1.25rem; }
 .card-kicker, .card-title-row span { color: #81dca7; font-size: .72rem; font-weight: 800; letter-spacing: .11em; margin-bottom: 1rem; text-transform: uppercase; }
 .metadata { display: grid; grid-template-columns: minmax(7.7rem, .24fr) 1fr; gap: .75rem 1rem; margin: 0; }
@@ -48,7 +48,9 @@ pre { color: #ffb0b5; overflow-wrap: anywhere; white-space: pre-wrap; }
 .stat-grid { display: grid; gap: .85rem; grid-template-columns: repeat(3, 1fr); }
 .stat { border-left: 2px solid #3b9c66; padding-left: .7rem; }.stat strong { color: #71e7a3; display: block; font-size: 1.65rem; letter-spacing: -.04em; line-height: 1.15; }.stat span { color: #9bb9a9; display: block; font-size: .76rem; margin-top: .2rem; }
 .card-title-row { align-items: center; display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }.card-title-row h3 { margin: 0; }.card-title-row span { margin: 0; }
-.screenshot-viewport { background: #060b09; border: 1px solid #335445; border-radius: 10px; max-height: min(70vh, 48rem); overflow: auto; }
+.screenshot-viewport { background: #060b09; border: 1px solid #335445; border-radius: 10px; overflow: auto; }
+.preview-viewport { height: min(56vh, 39rem); }.expanded-viewport { height: min(72vh, 52rem); }
 .screenshot { display: block; width: auto; max-width: none; height: auto; }
 .artifact-list { color: #c2d3c8; line-height: 1.75; list-style: square; padding-left: 1.2rem; }.text-link { color: #83edb1; display: inline-block; margin-top: .6rem; }
-@media (max-width: 800px) { .shell { padding-top: 2.2rem; }.summary-grid, .content-grid { grid-template-columns: 1fr; }.metadata { grid-template-columns: 1fr; gap: .15rem; }.metadata dd { margin-bottom: .75rem; }.stat-grid { grid-template-columns: repeat(2, 1fr); } }
+.text-button { background: transparent; border: 0; color: #83edb1; font-size: .78rem; margin: 0; padding: 0; }.text-button:hover { background: transparent; color: #e5fff0; text-decoration: underline; }
+@media (max-width: 900px) { .shell { padding-top: 2.2rem; }.dashboard-grid { grid-template-columns: 1fr; }.metadata { grid-template-columns: 1fr; gap: .15rem; }.metadata dd { margin-bottom: .75rem; }.stat-grid { grid-template-columns: repeat(2, 1fr); }.preview-viewport { height: min(58vh, 38rem); } }

@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TamanegiScope</title>
-    <link rel="stylesheet" href="/static/styles.css">
-    <script defer src="/static/app.js"></script>
+    <link rel="stylesheet" href="/static/styles.css?v=3">
+    <script defer src="/static/app.js?v=3"></script>
   </head>
   <body>
     <main class="shell">
@@ -56,42 +56,55 @@
         </div>
 
         <nav class="result-nav" aria-label="Scan result sections">
-          <a href="#scan-summary">Summary</a>
-          <a href="#scan-screenshot">Screenshot</a>
-          <a href="#scan-artifacts">Artifacts</a>
+          <button class="result-tab active" type="button" data-tab="summary">Summary</button>
+          <button class="result-tab" type="button" data-tab="screenshot">Screenshot</button>
+          <button class="result-tab" type="button" data-tab="artifacts">Artifacts</button>
         </nav>
 
-        <div class="summary-grid" id="scan-summary">
-          <section class="summary-card">
-            <p class="card-kicker">Overview</p>
-            <dl class="metadata" id="metadata"></dl>
-          </section>
-          <section class="summary-card">
-            <p class="card-kicker">Page statistics</p>
-            <div class="stat-grid">
-              <div class="stat"><strong data-stat="requests">—</strong><span>Requests</span></div>
-              <div class="stat"><strong data-stat="redirects">—</strong><span>Redirects</span></div>
-              <div class="stat"><strong data-stat="links">—</strong><span>Links</span></div>
-              <div class="stat"><strong data-stat="console">—</strong><span>Console</span></div>
-              <div class="stat"><strong data-stat="errors">—</strong><span>Page errors</span></div>
-              <div class="stat"><strong data-stat="downloads">—</strong><span>Downloads</span></div>
+        <div class="tab-panel active" data-panel="summary">
+          <div class="dashboard-grid">
+            <div class="summary-column">
+              <section class="summary-card">
+                <p class="card-kicker">Overview</p>
+                <dl class="metadata" id="metadata"></dl>
+              </section>
+              <section class="summary-card">
+                <p class="card-kicker">Page statistics</p>
+                <div class="stat-grid">
+                  <div class="stat"><strong data-stat="requests">—</strong><span>Requests</span></div>
+                  <div class="stat"><strong data-stat="redirects">—</strong><span>Redirects</span></div>
+                  <div class="stat"><strong data-stat="links">—</strong><span>Links</span></div>
+                  <div class="stat"><strong data-stat="console">—</strong><span>Console</span></div>
+                  <div class="stat"><strong data-stat="errors">—</strong><span>Page errors</span></div>
+                  <div class="stat"><strong data-stat="downloads">—</strong><span>Downloads</span></div>
+                </div>
+              </section>
             </div>
-          </section>
+            <section class="section-card screenshot-card">
+              <div class="card-title-row"><h3>Screenshot</h3><button class="text-button" type="button" data-tab="screenshot">Expand</button></div>
+              <div class="screenshot-viewport preview-viewport">
+                <img id="screenshot" alt="Captured page screenshot" class="screenshot">
+              </div>
+            </section>
+          </div>
         </div>
 
-        <div class="content-grid">
-          <section class="section-card" id="scan-screenshot">
-            <div class="card-title-row"><h3>Screenshot</h3><span>Full size</span></div>
-            <div class="screenshot-viewport">
-              <img id="screenshot" alt="Captured page screenshot" class="screenshot">
+        <section class="tab-panel screenshot-panel" data-panel="screenshot">
+          <section class="section-card">
+            <div class="card-title-row"><h3>Screenshot</h3><span>Full size · scroll to inspect</span></div>
+            <div class="screenshot-viewport expanded-viewport">
+              <img id="screenshot-expanded" alt="Captured page screenshot at original size" class="screenshot">
             </div>
           </section>
-          <section class="section-card" id="scan-artifacts">
+        </section>
+
+        <section class="tab-panel" data-panel="artifacts">
+          <section class="section-card">
             <div class="card-title-row"><h3>Artifacts</h3><span>Scan evidence</span></div>
             <ul id="artifact-list" class="artifact-list"></ul>
             <a id="html-link" class="text-link" target="_blank" rel="noopener">View captured HTML as text</a>
           </section>
-        </div>
+        </section>
       </section>
     </main>
   </body>

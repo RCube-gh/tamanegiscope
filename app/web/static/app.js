@@ -57,8 +57,11 @@ async function renderResult(scan) {
   }
 
   const screenshot = document.querySelector("#screenshot");
-  screenshot.src = `/scans/${encodeURIComponent(scan.scan_id)}/screenshot`;
+  const screenshotUrl = `/scans/${encodeURIComponent(scan.scan_id)}/screenshot`;
+  screenshot.src = screenshotUrl;
+  document.querySelector("#screenshot-expanded").src = screenshotUrl;
   screenshot.closest(".screenshot-viewport").classList.toggle("hidden", !scan.reachable);
+  document.querySelector("#screenshot-expanded").closest(".screenshot-viewport").classList.toggle("hidden", !scan.reachable);
 
   document.querySelector("#html-link").href = `/scans/${encodeURIComponent(scan.scan_id)}/html`;
   const artifactList = document.querySelector("#artifact-list");
@@ -124,3 +127,15 @@ form.addEventListener("submit", async (event) => {
 });
 
 checkHealth();
+
+for (const tab of document.querySelectorAll("[data-tab]")) {
+  tab.addEventListener("click", () => {
+    const selected = tab.dataset.tab;
+    for (const candidate of document.querySelectorAll(".result-tab")) {
+      candidate.classList.toggle("active", candidate.dataset.tab === selected);
+    }
+    for (const panel of document.querySelectorAll(".tab-panel")) {
+      panel.classList.toggle("active", panel.dataset.panel === selected);
+    }
+  });
+}
