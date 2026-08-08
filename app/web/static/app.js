@@ -42,17 +42,23 @@ async function renderResult(scan) {
   addMetadata("Scan ID", scan.scan_id);
   addMetadata("Final URL", scan.final_url);
   addMetadata("HTML SHA-256", scan.html_sha256);
-  addMetadata("Links", scan.links_count);
-  addMetadata("Requests", scan.requests_count);
-  addMetadata("Redirects", scan.redirects_count);
-  addMetadata("Console messages", scan.console_messages_count);
-  addMetadata("Page errors", scan.page_errors_count);
-  addMetadata("Downloads", scan.downloads_count);
   addMetadata("Error", scan.error);
+
+  const stats = {
+    requests: scan.requests_count,
+    redirects: scan.redirects_count,
+    links: scan.links_count,
+    console: scan.console_messages_count,
+    errors: scan.page_errors_count,
+    downloads: scan.downloads_count,
+  };
+  for (const [name, value] of Object.entries(stats)) {
+    document.querySelector(`[data-stat="${name}"]`).textContent = displayValue(value);
+  }
 
   const screenshot = document.querySelector("#screenshot");
   screenshot.src = `/scans/${encodeURIComponent(scan.scan_id)}/screenshot`;
-  screenshot.classList.toggle("hidden", !scan.reachable);
+  screenshot.closest(".screenshot-viewport").classList.toggle("hidden", !scan.reachable);
 
   document.querySelector("#html-link").href = `/scans/${encodeURIComponent(scan.scan_id)}/html`;
   const artifactList = document.querySelector("#artifact-list");

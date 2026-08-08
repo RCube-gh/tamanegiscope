@@ -47,7 +47,7 @@
       </section>
 
       <section class="result hidden" id="result-panel" aria-live="polite">
-        <div class="result-title">
+        <div class="result-title result-header">
           <div>
             <p class="eyebrow">SCAN RESULT</p>
             <h2 id="result-heading">Result</h2>
@@ -55,15 +55,39 @@
           <span class="pill" id="result-status"></span>
         </div>
 
-        <dl class="metadata" id="metadata"></dl>
+        <nav class="result-nav" aria-label="Scan result sections">
+          <a href="#scan-summary">Summary</a>
+          <a href="#scan-screenshot">Screenshot</a>
+          <a href="#scan-artifacts">Artifacts</a>
+        </nav>
 
-        <div class="artifacts-grid">
-          <section>
-            <h3>Screenshot</h3>
-            <img id="screenshot" alt="Captured page screenshot" class="screenshot">
+        <div class="summary-grid" id="scan-summary">
+          <section class="summary-card">
+            <p class="card-kicker">Overview</p>
+            <dl class="metadata" id="metadata"></dl>
           </section>
-          <section>
-            <h3>Artifacts</h3>
+          <section class="summary-card">
+            <p class="card-kicker">Page statistics</p>
+            <div class="stat-grid">
+              <div class="stat"><strong data-stat="requests">—</strong><span>Requests</span></div>
+              <div class="stat"><strong data-stat="redirects">—</strong><span>Redirects</span></div>
+              <div class="stat"><strong data-stat="links">—</strong><span>Links</span></div>
+              <div class="stat"><strong data-stat="console">—</strong><span>Console</span></div>
+              <div class="stat"><strong data-stat="errors">—</strong><span>Page errors</span></div>
+              <div class="stat"><strong data-stat="downloads">—</strong><span>Downloads</span></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="content-grid">
+          <section class="section-card" id="scan-screenshot">
+            <div class="card-title-row"><h3>Screenshot</h3><span>Full size</span></div>
+            <div class="screenshot-viewport">
+              <img id="screenshot" alt="Captured page screenshot" class="screenshot">
+            </div>
+          </section>
+          <section class="section-card" id="scan-artifacts">
+            <div class="card-title-row"><h3>Artifacts</h3><span>Scan evidence</span></div>
             <ul id="artifact-list" class="artifact-list"></ul>
             <a id="html-link" class="text-link" target="_blank" rel="noopener">View captured HTML as text</a>
           </section>
