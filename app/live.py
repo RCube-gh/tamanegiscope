@@ -60,6 +60,7 @@ class LiveSession:
         self.downloads: list[dict[str, Any]] = []
         self.response_tasks: list[asyncio.Task[None]] = []
         self.download_tasks: list[asyncio.Task[None]] = []
+        self.navigation_task: asyncio.Task[None] | None = None
         self.playwright: Any = None
         self.browser: Any = None
         self.context: Any = None
@@ -116,20 +117,28 @@ class LiveSession:
                 await self.context.route("**/*", self._enforce_public_egress)
             self.page = await self.context.new_page()
             self._install_observers()
-            response = await self.page.goto(
-                self.request.url,
-                wait_until="domcontentloaded",
-                timeout=SCAN_TIMEOUT_MS,
-            )
-            self.result.reachable = True
-            self.result.status = response.status if response else None
-            self.result.final_url = self.page.url
             self.status = "active"
+            self.navigation_task = asyncio.create_task(self._navigate())
         except Exception as error:
             self.error = f"{type(error).__name__}: {error}"
             self.status = "failed"
             await self._close_browser()
         return self.detail()
+
+    async def _navigate(self) -> None:
+        """Navigate without holding up access to the visible Live Scan browser."""
+        try:
+            response = await self.page.goto(
+                self.request.url,
+                wait_until="domcontentloaded",
+                timeout=max(SCAN_TIMEOUT_MS, 90_000),
+            )
+            self.result.reachable = True
+            self.result.status = response.status if response else None
+            self.result.final_url = self.page.url
+        except Exception as error:
+            # Keep the headed browser available: the operator can inspect or retry it manually.
+            self.error = f"{type(error).__name__}: {error}"
 
     async def _enforce_public_egress(self, route: Any) -> None:
         target_url = route.request.url
@@ -268,6 +277,9 @@ class LiveSession:
         return self.result
 
     async def _finalize_artifacts(self) -> None:
+        if self.navigation_task is not None and not self.navigation_task.done():
+            self.navigation_task.cancel()
+            await asyncio.gather(self.navigation_task, return_exceptions=True)
         if self.response_tasks:
             await asyncio.gather(*self.response_tasks, return_exceptions=True)
         if self.download_tasks:
