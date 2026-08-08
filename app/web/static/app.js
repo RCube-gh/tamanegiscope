@@ -106,7 +106,11 @@ function renderSummary(summary) {
 
   const breakdown = document.querySelector("#network-breakdown");
   breakdown.replaceChildren();
-  for (const item of [...summary.resource_types.map((entry) => [`${entry.type} requests`, entry.count]), ...summary.status_codes.map((entry) => [`HTTP ${entry.status}`, entry.count])]) {
+  const overviewItems = [
+    ...summary.resource_types.slice(0, 5).map((entry) => [`${entry.type} requests`, entry.count]),
+    ...summary.status_codes.slice(0, 5).map((entry) => [`HTTP ${entry.status}`, entry.count]),
+  ];
+  for (const item of overviewItems) {
     const row = document.createElement("div");
     const label = document.createElement("span");
     const count = document.createElement("strong");

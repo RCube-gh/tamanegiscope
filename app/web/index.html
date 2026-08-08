@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TamanegiScope</title>
-    <link rel="stylesheet" href="/static/styles.css?v=6">
-    <script defer src="/static/app.js?v=6"></script>
+    <link rel="stylesheet" href="/static/styles.css?v=7">
+    <script defer src="/static/app.js?v=7"></script>
   </head>
   <body>
     <main class="shell">
@@ -99,15 +99,17 @@
         </div>
 
         <section class="tab-panel analysis-panel" data-panel="network">
-          <div class="analysis-grid">
-            <section class="section-card">
+          <div class="network-layout">
+            <section class="section-card network-overview-card">
+              <div class="card-title-row"><h3>Network overview</h3><span>Captured traffic</span></div>
+              <div class="breakdown" id="network-breakdown"></div>
+            </section>
+            <section class="section-card network-table-card">
               <div class="card-title-row"><h3>Domains</h3><span id="domain-count">—</span></div>
               <div class="table-wrap"><table><thead><tr><th>Domain</th><th>Req</th><th>IP</th><th>Status</th></tr></thead><tbody id="domain-table"></tbody></table></div>
             </section>
-            <section class="section-card">
-              <div class="card-title-row"><h3>Network overview</h3><span>Captured traffic</span></div>
-              <div class="breakdown" id="network-breakdown"></div>
-              <div class="card-title-row subheading"><h3>IP addresses</h3><span id="ip-count">—</span></div>
+            <section class="section-card network-table-card">
+              <div class="card-title-row"><h3>IP addresses</h3><span id="ip-count">—</span></div>
               <div class="table-wrap"><table><thead><tr><th>IP</th><th>Responses</th><th>Domains</th></tr></thead><tbody id="ip-table"></tbody></table></div>
             </section>
           </div>
