@@ -69,3 +69,14 @@ async def get_html(scan_id: str) -> PlainTextResponse:
     except ScanNotFoundError as error:
         raise HTTPException(status_code=404, detail="HTML artifact not found") from error
     return PlainTextResponse(page_html.read_text(encoding="utf-8"), media_type="text/plain")
+
+
+@app.get("/scans/{scan_id}/artifacts/{artifact_name:path}", response_class=PlainTextResponse)
+async def get_text_artifact(scan_id: str, artifact_name: str) -> PlainTextResponse:
+    if Path(artifact_name).suffix != ".json":
+        raise HTTPException(status_code=404, detail="text artifact not found")
+    try:
+        artifact = scan_artifact(scan_id, artifact_name)
+    except ScanNotFoundError as error:
+        raise HTTPException(status_code=404, detail="artifact not found") from error
+    return PlainTextResponse(artifact.read_text(encoding="utf-8"), media_type="application/json")

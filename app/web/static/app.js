@@ -43,6 +43,11 @@ async function renderResult(scan) {
   addMetadata("Final URL", scan.final_url);
   addMetadata("HTML SHA-256", scan.html_sha256);
   addMetadata("Links", scan.links_count);
+  addMetadata("Requests", scan.requests_count);
+  addMetadata("Redirects", scan.redirects_count);
+  addMetadata("Console messages", scan.console_messages_count);
+  addMetadata("Page errors", scan.page_errors_count);
+  addMetadata("Downloads", scan.downloads_count);
   addMetadata("Error", scan.error);
 
   const screenshot = document.querySelector("#screenshot");
@@ -57,7 +62,16 @@ async function renderResult(scan) {
     const artifacts = await artifactsResponse.json();
     for (const artifact of artifacts.artifacts) {
       const item = document.createElement("li");
-      item.textContent = `${artifact.name} · ${artifact.size_bytes.toLocaleString()} bytes`;
+      if (artifact.name.endsWith(".json")) {
+        const link = document.createElement("a");
+        link.href = `/scans/${encodeURIComponent(scan.scan_id)}/artifacts/${artifact.name}`;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.textContent = artifact.name;
+        item.append(link, ` · ${artifact.size_bytes.toLocaleString()} bytes`);
+      } else {
+        item.textContent = `${artifact.name} · ${artifact.size_bytes.toLocaleString()} bytes`;
+      }
       artifactList.append(item);
     }
   }

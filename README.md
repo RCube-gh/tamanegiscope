@@ -20,11 +20,14 @@ GET  /scans/{scan_id}
 GET  /scans/{scan_id}/artifacts
 GET  /scans/{scan_id}/screenshot
 GET  /scans/{scan_id}/html
+GET  /scans/{scan_id}/artifacts/{artifact_name}
 ```
 
 `POST /scans/quick` accepts a URL and `auto`, `direct`, or `tor` network selection. Auto selects Tor for `.onion` hosts and Direct for other HTTP(S) hosts. Direct targets are rejected when they resolve to non-public IP addresses.
 
 The scan result can be read again using its `scan_id`. `screenshot` is returned as a PNG. The captured `html` endpoint deliberately returns `text/plain`, so the captured page cannot execute in the browser that views the artifact.
+
+Each Quick Scan also records `network.json`, `redirects.json`, `console.json`, `downloads.json`, and a Playwright `trace.zip`. JSON artifacts are available through the artifact endpoint. Request and response `Authorization`, `Cookie`, `Proxy-Authorization`, and `Set-Cookie` header values are redacted before storage.
 
 ## Web UI
 
