@@ -16,7 +16,9 @@ if ! pgrep -f '[X]vfb :99' >/dev/null; then
 fi
 
 if ! pgrep -x fluxbox >/dev/null; then
-  nohup fluxbox >/tmp/tamanegiscope-fluxbox.log 2>&1 &
+  mkdir -p "$HOME/.fluxbox"
+  cp .devcontainer/fluxbox-apps "$HOME/.fluxbox/apps"
+  nohup fluxbox -no-toolbar >/tmp/tamanegiscope-fluxbox.log 2>&1 &
 fi
 
 if ! pgrep -x x11vnc >/dev/null; then

@@ -1,0 +1,6 @@
+# The visible Live Scan browser owns the virtual desktop. Keep the browser
+# content chrome (tabs/address bar), but remove Fluxbox's movable title frame.
+[app] (title=.*Google Chrome for Testing.*) {1}
+  [Deco]      {NONE}
+  [Maximized] {yes}
+[end]

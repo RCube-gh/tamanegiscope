@@ -106,7 +106,7 @@ class LiveSession:
             self.browser = await self.playwright.chromium.launch(
                 headless=False,
                 proxy={"server": TOR_SOCKS_URL} if self.network is NetworkMode.TOR else None,
-                args=["--window-size=1440,900"],
+                args=["--start-maximized", "--window-position=0,0"],
             )
             self.context = await self.browser.new_context(
                 accept_downloads=True,
