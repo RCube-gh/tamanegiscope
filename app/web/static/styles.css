@@ -29,6 +29,16 @@ h3 { font-size: .95rem; text-transform: uppercase; letter-spacing: .09em; color:
 .status-dot.online, .pill { background: #153d28; color: #83edb1; border-color: #297347; }
 .pill.failure { background: #3d1d21; border-color: #823842; color: #ffafb4; }
 form { display: grid; gap: .65rem; margin-top: 1.4rem; }
+.scan-actions, .live-actions { display: flex; flex-wrap: wrap; gap: .7rem; }
+.scan-actions button, .live-actions button { flex: 1 1 13rem; }
+.secondary-button, .stop-live-button { background: transparent; border: 1px solid #4f8d6b; color: #baf3d0; }
+.secondary-button:hover { background: #1d5439; }
+.stop-live-button { border-color: #bf8046; color: #ffd1a5; }.stop-live-button:hover { background: #57351f; }
+.live-session { display: grid; gap: 1.2rem; }
+.live-session .subtitle { margin: 0; }
+.live-metadata { margin: 0; }
+.live-browser-link { align-items: center; background: #67dd9d; border-radius: 8px; color: #062011; display: inline-flex; flex: 1 1 13rem; font-weight: 800; justify-content: center; padding: .85rem 1rem; text-decoration: none; }
+.live-browser-link:hover { background: #90efba; }
 label { color: #bad0c1; font-size: .86rem; font-weight: 700; }
 input, select, button { font: inherit; border-radius: 8px; }
 input, select { background: #0c1e18; border: 1px solid #416852; color: #f0f6f2; padding: .8rem .9rem; width: 100%; }

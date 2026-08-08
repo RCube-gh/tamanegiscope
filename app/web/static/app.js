@@ -4,6 +4,10 @@ const progressPanel = document.querySelector("#progress-panel");
 const errorPanel = document.querySelector("#error-panel");
 const resultPanel = document.querySelector("#result-panel");
 const apiStatus = document.querySelector("#api-status");
+const liveScanButton = document.querySelector("#live-scan-button");
+const liveSessionPanel = document.querySelector("#live-session-panel");
+const stopLiveScanButton = document.querySelector("#stop-live-scan-button");
+let activeLiveScanId = null;
 
 function show(element, visible) {
   element.classList.toggle("hidden", !visible);
@@ -192,15 +196,38 @@ async function checkHealth() {
   }
 }
 
+function liveViewerUrl() {
+  const viewerHost = window.location.hostname.replace(
+    /-8000(?=\.app\.github\.dev$)/,
+    "-6080",
+  );
+  if (viewerHost !== window.location.hostname) {
+    return `${window.location.protocol}//${viewerHost}/vnc.html?autoconnect=true&resize=scale&path=websockify`;
+  }
+  return `${window.location.protocol}//${window.location.hostname}:6080/vnc.html?autoconnect=true&resize=scale&path=websockify`;
+}
+
+function renderLiveSession(session) {
+  activeLiveScanId = session.scan_id;
+  setText("#live-session-id", session.scan_id);
+  setText("#live-session-network", session.network);
+  setText("#live-session-url", session.final_url || session.requested_url);
+  const link = document.querySelector("#live-browser-link");
+  link.href = liveViewerUrl();
+  link.textContent = "Open remote browser ↗";
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = new FormData(form);
   const payload = { url: data.get("url"), network: data.get("network") };
 
   show(errorPanel, false);
+  show(liveSessionPanel, false);
   show(resultPanel, false);
   show(progressPanel, true);
   button.disabled = true;
+  liveScanButton.disabled = true;
 
   try {
     const response = await fetch("/scans/quick", {
@@ -219,6 +246,63 @@ form.addEventListener("submit", async (event) => {
   } finally {
     show(progressPanel, false);
     button.disabled = false;
+    liveScanButton.disabled = false;
+  }
+});
+
+liveScanButton.addEventListener("click", async () => {
+  if (!form.reportValidity()) return;
+  const data = new FormData(form);
+  const payload = { url: data.get("url"), network: data.get("network") };
+
+  show(errorPanel, false);
+  show(resultPanel, false);
+  show(progressPanel, true);
+  document.querySelector("#progress-message").textContent = "Starting visible remote browser…";
+  button.disabled = true;
+  liveScanButton.disabled = true;
+
+  try {
+    const response = await fetch("/scans/live", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(await readError(response));
+    const session = await response.json();
+    if (session.status !== "active") throw new Error(session.error || "Live Scan could not start");
+    renderLiveSession(session);
+    show(liveSessionPanel, true);
+  } catch (error) {
+    document.querySelector("#error-message").textContent = error.message;
+    show(errorPanel, true);
+  } finally {
+    show(progressPanel, false);
+    document.querySelector("#progress-message").textContent = "Creating remote browser session…";
+    button.disabled = false;
+    liveScanButton.disabled = false;
+  }
+});
+
+stopLiveScanButton.addEventListener("click", async () => {
+  if (!activeLiveScanId) return;
+  stopLiveScanButton.disabled = true;
+  stopLiveScanButton.textContent = "Capturing session…";
+  try {
+    const response = await fetch(`/scans/live/${encodeURIComponent(activeLiveScanId)}/stop`, { method: "POST" });
+    if (!response.ok) throw new Error(await readError(response));
+    const scan = await response.json();
+    await renderResult(scan);
+    show(liveSessionPanel, false);
+    show(resultPanel, true);
+    document.body.classList.add("showing-result");
+    activeLiveScanId = null;
+  } catch (error) {
+    document.querySelector("#error-message").textContent = error.message;
+    show(errorPanel, true);
+  } finally {
+    stopLiveScanButton.disabled = false;
+    stopLiveScanButton.textContent = "Stop & capture session";
   }
 });
 
@@ -227,6 +311,7 @@ checkHealth();
 document.querySelector("#new-scan-button").addEventListener("click", () => {
   document.body.classList.remove("showing-result");
   show(resultPanel, false);
+  show(liveSessionPanel, false);
   document.querySelector("#target-url").focus();
 });
 

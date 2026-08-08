@@ -16,6 +16,20 @@ class QuickScanRequest(BaseModel):
     network: NetworkMode = NetworkMode.AUTO
 
 
+class LiveScanRequest(QuickScanRequest):
+    """A manually operated browser session recorded by the remote runner."""
+
+
+class LiveScanSession(BaseModel):
+    scan_id: str
+    scan_type: str = "live"
+    network: NetworkMode
+    requested_url: str
+    final_url: str | None = None
+    status: str
+    error: str | None = None
+
+
 class QuickScanResult(BaseModel):
     scan_id: str
     scan_type: str = "quick"

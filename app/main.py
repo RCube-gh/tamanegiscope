@@ -4,7 +4,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.models import QuickScanRequest, QuickScanResult, ScanArtifacts
+from app.live import LiveScanError, LiveSessionManager
+from app.models import LiveScanRequest, LiveScanSession, QuickScanRequest, QuickScanResult, ScanArtifacts
 from app.scanner import (
     ScanNotFoundError,
     TargetValidationError,
@@ -17,6 +18,7 @@ from app.scanner import (
 
 app = FastAPI(title="TamanegiScope", version="0.1.0")
 WEB_ROOT = Path(__file__).resolve().parent / "web"
+live_sessions = LiveSessionManager()
 app.mount("/static", StaticFiles(directory=WEB_ROOT / "static"), name="static")
 
 
@@ -36,6 +38,37 @@ async def quick_scan(request: QuickScanRequest) -> QuickScanResult:
         return await run_quick_scan(request)
     except TargetValidationError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.post("/scans/live", response_model=LiveScanSession)
+async def start_live_scan(request: LiveScanRequest) -> LiveScanSession:
+    try:
+        return await live_sessions.start(request)
+    except TargetValidationError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except LiveScanError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+
+
+@app.get("/scans/live/{scan_id}", response_model=LiveScanSession)
+async def get_live_scan(scan_id: str) -> LiveScanSession:
+    try:
+        return await live_sessions.detail(scan_id)
+    except LiveScanError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@app.post("/scans/live/{scan_id}/stop", response_model=QuickScanResult)
+async def stop_live_scan(scan_id: str) -> QuickScanResult:
+    try:
+        return await live_sessions.stop(scan_id)
+    except LiveScanError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@app.on_event("shutdown")
+async def close_live_scan() -> None:
+    await live_sessions.shutdown()
 
 
 @app.get("/scans/{scan_id}", response_model=QuickScanResult)

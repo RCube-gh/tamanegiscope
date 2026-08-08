@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TamanegiScope</title>
-    <link rel="stylesheet" href="/static/styles.css?v=8">
-    <script defer src="/static/app.js?v=8"></script>
+    <link rel="stylesheet" href="/static/styles.css?v=9">
+    <script defer src="/static/app.js?v=9"></script>
   </head>
   <body>
     <main class="shell">
@@ -31,7 +31,10 @@
             <option value="tor">Tor</option>
           </select>
 
-          <button id="scan-button" type="submit">Run Quick Scan</button>
+          <div class="scan-actions">
+            <button id="scan-button" type="submit">Run Quick Scan</button>
+            <button id="live-scan-button" class="secondary-button" type="button">Start Live Scan</button>
+          </div>
         </form>
         <p class="hint">Auto selects Tor for <code>.onion</code> targets and Direct for other HTTP(S) URLs.</p>
       </section>
@@ -44,6 +47,27 @@
       <section class="panel hidden" id="error-panel" role="alert">
         <h2>Scan could not start</h2>
         <pre id="error-message"></pre>
+      </section>
+
+      <section class="live-session panel hidden" id="live-session-panel" aria-live="polite">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">LIVE SCAN ACTIVE</p>
+            <h2>Remote browser is ready</h2>
+          </div>
+          <span class="status-dot online" id="live-session-status">Active</span>
+        </div>
+        <p class="subtitle">Open the remote browser in a new tab, operate it normally, then return here to capture the session.</p>
+        <dl class="metadata live-metadata">
+          <dt>Session ID</dt><dd id="live-session-id">—</dd>
+          <dt>Network</dt><dd id="live-session-network">—</dd>
+          <dt>Current URL</dt><dd id="live-session-url">—</dd>
+        </dl>
+        <div class="live-actions">
+          <a id="live-browser-link" class="live-browser-link" target="_blank" rel="noopener">Open remote browser</a>
+          <button id="stop-live-scan-button" class="stop-live-button" type="button">Stop &amp; capture session</button>
+        </div>
+        <p class="hint">The remote browser is displayed through the Codespaces 6080 port. Its activity is recorded until you stop this session.</p>
       </section>
 
       <section class="result hidden" id="result-panel" aria-live="polite">
