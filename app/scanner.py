@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from playwright.async_api import async_playwright
 
 from app.config import SCAN_TIMEOUT_MS, TOR_SOCKS_URL, artifact_root
@@ -30,6 +31,9 @@ class ScanNotFoundError(FileNotFoundError):
 
 SCAN_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
 SENSITIVE_HEADERS = {"authorization", "cookie", "proxy-authorization", "set-cookie"}
+POST_LOAD_SETTLE_MS = 500
+LAZY_SCROLL_PAUSE_MS = 250
+MAX_LAZY_SCROLL_STEPS = 30
 
 
 def scan_directory(scan_id: str) -> Path:
@@ -235,6 +239,61 @@ def reject_non_public_direct_target(url: str) -> None:
             raise TargetValidationError("Direct targets must resolve only to globally routable IP addresses")
 
 
+async def prepare_page_for_capture(page: Any) -> None:
+    """Give normal and viewport-triggered page resources a bounded chance to load."""
+    try:
+        await page.wait_for_load_state("load", timeout=3_000)
+    except PlaywrightTimeoutError:
+        # Pages with long-lived requests should still produce a Quick Scan result.
+        pass
+
+    try:
+        await asyncio.wait_for(
+            page.evaluate(
+                """async () => {
+                    if (document.fonts?.ready) {
+                        await document.fonts.ready;
+                    }
+                }"""
+            ),
+            timeout=3,
+        )
+    except (asyncio.TimeoutError, PlaywrightTimeoutError):
+        pass
+
+    await page.wait_for_timeout(POST_LOAD_SETTLE_MS)
+    await page.evaluate(
+        """async ({ pauseMs, maxSteps }) => {
+            const pause = () => new Promise((resolve) => setTimeout(resolve, pauseMs));
+            const root = document.documentElement;
+            const step = Math.max(window.innerHeight, 640);
+            let stableBottomChecks = 0;
+            let lastHeight = 0;
+            let steps = 0;
+
+            for (; steps < maxSteps; steps += 1) {
+                window.scrollBy(0, step);
+                await pause();
+
+                const height = Math.max(root.scrollHeight, document.body?.scrollHeight || 0);
+                const atBottom = window.scrollY + window.innerHeight >= height - 2;
+                if (atBottom && height === lastHeight) {
+                    stableBottomChecks += 1;
+                    if (stableBottomChecks >= 2) break;
+                } else {
+                    stableBottomChecks = 0;
+                }
+                lastHeight = height;
+            }
+
+            window.scrollTo(0, 0);
+            await pause();
+            return { steps, finalHeight: Math.max(root.scrollHeight, document.body?.scrollHeight || 0) };
+        }""",
+        {"pauseMs": LAZY_SCROLL_PAUSE_MS, "maxSteps": MAX_LAZY_SCROLL_STEPS},
+    )
+
+
 async def run_quick_scan(request: QuickScanRequest) -> QuickScanResult:
     network = resolve_network(request.url, request.network)
     if network is NetworkMode.DIRECT:
@@ -383,6 +442,7 @@ async def run_quick_scan(request: QuickScanRequest) -> QuickScanResult:
                 page.on("download", schedule_download)
 
                 response = await page.goto(request.url, wait_until="domcontentloaded", timeout=SCAN_TIMEOUT_MS)
+                await prepare_page_for_capture(page)
                 html = await page.content()
                 screenshot = output_dir / "screenshot.png"
                 page_html = output_dir / "page.html"
