@@ -57,7 +57,7 @@ pre { color: #ffb0b5; overflow-wrap: anywhere; white-space: pre-wrap; }
 .text-button { background: transparent; border: 0; color: #83edb1; font-size: .78rem; margin: 0; padding: 0; }.text-button:hover { background: transparent; color: #e5fff0; text-decoration: underline; }
 body.showing-result { overflow: hidden; }
 body.showing-result #landing-header, body.showing-result #scan-panel { display: none; }
-body.showing-result .shell { height: 100vh; max-width: 1440px; padding: 1rem 0; }
+body.showing-result .shell { height: 100vh; max-width: none; padding: 1rem 0; width: calc(100% - 3rem); }
 body.showing-result .result { display: grid; grid-template-rows: auto auto minmax(0, 1fr); height: 100%; margin: 0; min-height: 0; }
 body.showing-result .tab-panel.active { height: 100%; min-height: 0; }
 body.showing-result .dashboard-grid { height: 100%; min-height: 0; }
@@ -66,5 +66,6 @@ body.showing-result .summary-card, body.showing-result .section-card { min-heigh
 body.showing-result .screenshot-card { display: grid; grid-template-rows: auto minmax(0, 1fr); }
 body.showing-result .preview-viewport, body.showing-result .expanded-viewport { height: 100%; min-height: 0; }
 body.showing-result .screenshot-panel > .section-card, body.showing-result [data-panel="artifacts"] > .section-card { height: 100%; }
+@media (min-width: 1200px) { body.showing-result .dashboard-grid { grid-template-columns: minmax(0, 1.2fr) minmax(34rem, .8fr); } }
 @media (max-width: 900px) { .shell { padding-top: 2.2rem; }.dashboard-grid { grid-template-columns: 1fr; }.metadata { grid-template-columns: 1fr; gap: .15rem; }.metadata dd { margin-bottom: .75rem; }.stat-grid { grid-template-columns: repeat(2, 1fr); }.preview-viewport { height: min(58vh, 38rem); } }
 @media (max-width: 900px) { body.showing-result { overflow: auto; } body.showing-result .shell { height: auto; padding: 1rem 0 2rem; } body.showing-result .result { display: block; height: auto; } body.showing-result .tab-panel.active, body.showing-result .dashboard-grid { height: auto; } body.showing-result .preview-viewport, body.showing-result .expanded-viewport { height: min(65vh, 44rem); } }
