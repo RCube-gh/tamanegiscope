@@ -100,6 +100,100 @@ def write_json(path: Path, contents: Any) -> None:
     path.write_text(json.dumps(contents, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def value_digest(value: str | bytes) -> tuple[int, str]:
+    payload = value.encode("utf-8") if isinstance(value, str) else value
+    return len(payload), hashlib.sha256(payload).hexdigest()
+
+
+def summarize_cookies(cookies: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Record cookie attributes without persisting cookie values."""
+    summary = []
+    for cookie in cookies:
+        value_size, value_sha256 = value_digest(cookie["value"])
+        summary.append(
+            {
+                "name": cookie["name"],
+                "domain": cookie["domain"],
+                "path": cookie["path"],
+                "expires": cookie["expires"],
+                "http_only": cookie["httpOnly"],
+                "secure": cookie["secure"],
+                "same_site": cookie["sameSite"],
+                "partition_key": cookie.get("partitionKey"),
+                "value_size_bytes": value_size,
+                "value_sha256": value_sha256,
+            }
+        )
+    return summary
+
+
+async def capture_browser_storage(context: Any) -> dict[str, Any]:
+    """Capture cookie and web-storage metadata without retaining values."""
+    storage_origins = []
+    for page in context.pages:
+        try:
+            storage = await page.evaluate(
+                """() => ({
+                    origin: location.origin,
+                    local_storage: Object.entries(localStorage),
+                    session_storage: Object.entries(sessionStorage),
+                })"""
+            )
+        except Exception:
+            continue
+
+        for storage_type in ("local_storage", "session_storage"):
+            entries = []
+            for name, value in storage.get(storage_type, []):
+                value_size, value_sha256 = value_digest(value)
+                entries.append(
+                    {"name": name, "value_size_bytes": value_size, "value_sha256": value_sha256}
+                )
+            storage[storage_type] = entries
+        storage_origins.append(storage)
+
+    return {"cookies": summarize_cookies(await context.cookies()), "origins": storage_origins}
+
+
+def install_websocket_observer(page: Any, websockets: list[dict[str, Any]]) -> None:
+    """Observe WebSockets without retaining frame contents."""
+    def record_socket(socket: Any) -> None:
+        entry: dict[str, Any] = {
+            "url": socket.url,
+            "closed": False,
+            "sent_frames": 0,
+            "received_frames": 0,
+            "sent_bytes": 0,
+            "received_bytes": 0,
+            "frames": [],
+            "errors": [],
+        }
+        websockets.append(entry)
+
+        def record_frame(direction: str, payload: str | bytes) -> None:
+            size, payload_sha256 = value_digest(payload)
+            entry[f"{direction}_frames"] += 1
+            entry[f"{direction}_bytes"] += size
+            entry["frames"].append(
+                {
+                    "direction": direction,
+                    "payload_type": "text" if isinstance(payload, str) else "binary",
+                    "size_bytes": size,
+                    "sha256": payload_sha256,
+                }
+            )
+
+        def mark_closed(*_: Any) -> None:
+            entry["closed"] = True
+
+        socket.on("framesent", lambda payload: record_frame("sent", payload))
+        socket.on("framereceived", lambda payload: record_frame("received", payload))
+        socket.on("socketerror", lambda error: entry["errors"].append(str(error)))
+        socket.on("close", mark_closed)
+
+    page.on("websocket", record_socket)
+
+
 def hostname(value: str) -> str | None:
     try:
         return urlsplit(value).hostname
@@ -114,7 +208,15 @@ def build_scan_summary(
     console_messages: list[dict[str, Any]],
     page_errors: list[dict[str, str]],
     downloads: list[dict[str, Any]],
+    browser_storage: dict[str, Any] | None = None,
+    websockets: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
+    browser_storage = browser_storage or {"cookies": [], "origins": []}
+    websockets = websockets or []
+    storage_entries = sum(
+        len(origin["local_storage"]) + len(origin["session_storage"])
+        for origin in browser_storage["origins"]
+    )
     domain_data: dict[str, dict[str, Any]] = defaultdict(
         lambda: {"requests": 0, "responses": 0, "failed": 0, "ips": set(), "statuses": Counter()}
     )
@@ -185,6 +287,9 @@ def build_scan_summary(
             "console_messages": len(console_messages),
             "page_errors": len(page_errors),
             "downloads": len(downloads),
+            "cookies": len(browser_storage["cookies"]),
+            "storage_entries": storage_entries,
+            "websockets": len(websockets),
         },
         "resource_types": [
             {"type": resource_type, "count": count}
@@ -203,6 +308,8 @@ def build_scan_summary(
             "page_errors": page_errors,
         },
         "primary_response": primary_response,
+        "storage": browser_storage,
+        "websockets": websockets,
     }
 
 
@@ -313,6 +420,8 @@ async def run_quick_scan(request: QuickScanRequest) -> QuickScanResult:
     console_messages: list[dict[str, Any]] = []
     page_errors: list[dict[str, str]] = []
     downloads: list[dict[str, Any]] = []
+    websockets: list[dict[str, Any]] = []
+    browser_storage: dict[str, Any] = {"cookies": [], "origins": []}
     response_tasks: list[asyncio.Task[None]] = []
     download_tasks: list[asyncio.Task[None]] = []
 
@@ -440,6 +549,7 @@ async def run_quick_scan(request: QuickScanRequest) -> QuickScanResult:
                 page.on("console", record_console)
                 page.on("pageerror", record_page_error)
                 page.on("download", schedule_download)
+                install_websocket_observer(page, websockets)
 
                 response = await page.goto(request.url, wait_until="domcontentloaded", timeout=SCAN_TIMEOUT_MS)
                 await prepare_page_for_capture(page)
@@ -457,6 +567,7 @@ async def run_quick_scan(request: QuickScanRequest) -> QuickScanResult:
                 result.html_path = str(page_html)
                 result.html_sha256 = hashlib.sha256(html.encode("utf-8")).hexdigest()
                 result.links_count = await page.locator("a[href]").count()
+                browser_storage = await capture_browser_storage(context)
             finally:
                 if response_tasks:
                     await asyncio.gather(*response_tasks, return_exceptions=True)
@@ -468,6 +579,12 @@ async def run_quick_scan(request: QuickScanRequest) -> QuickScanResult:
                 result.console_messages_count = len(console_messages)
                 result.page_errors_count = len(page_errors)
                 result.downloads_count = len(downloads)
+                result.cookies_count = len(browser_storage["cookies"])
+                result.storage_entries_count = sum(
+                    len(origin["local_storage"]) + len(origin["session_storage"])
+                    for origin in browser_storage["origins"]
+                )
+                result.websockets_count = len(websockets)
                 if context is not None:
                     try:
                         await context.tracing.stop(path=str(output_dir / "trace.zip"))
@@ -481,9 +598,13 @@ async def run_quick_scan(request: QuickScanRequest) -> QuickScanResult:
     write_json(output_dir / "redirects.json", {"redirects": redirects})
     write_json(output_dir / "console.json", {"messages": console_messages, "page_errors": page_errors})
     write_json(output_dir / "downloads.json", {"downloads": downloads})
+    write_json(output_dir / "storage.json", browser_storage)
+    write_json(output_dir / "websockets.json", {"websockets": websockets})
     write_json(
         output_dir / "summary.json",
-        build_scan_summary(result, network_events, redirects, console_messages, page_errors, downloads),
+        build_scan_summary(
+            result, network_events, redirects, console_messages, page_errors, downloads, browser_storage, websockets
+        ),
     )
     metadata = output_dir / "metadata.json"
     write_json(

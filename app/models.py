@@ -48,6 +48,9 @@ class QuickScanResult(BaseModel):
     console_messages_count: int | None = None
     page_errors_count: int | None = None
     downloads_count: int | None = None
+    cookies_count: int | None = None
+    storage_entries_count: int | None = None
+    websockets_count: int | None = None
     error: str | None = None
 
 

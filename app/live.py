@@ -17,7 +17,9 @@ from app.models import LiveScanRequest, LiveScanSession, NetworkMode, QuickScanR
 from app.scanner import (
     TargetValidationError,
     build_scan_summary,
+    capture_browser_storage,
     hostname,
+    install_websocket_observer,
     redacted_headers,
     reject_non_public_direct_target,
     resolve_network,
@@ -58,6 +60,8 @@ class LiveSession:
         self.console_messages: list[dict[str, Any]] = []
         self.page_errors: list[dict[str, str]] = []
         self.downloads: list[dict[str, Any]] = []
+        self.websockets: list[dict[str, Any]] = []
+        self.browser_storage: dict[str, Any] = {"cookies": [], "origins": []}
         self.response_tasks: list[asyncio.Task[None]] = []
         self.download_tasks: list[asyncio.Task[None]] = []
         self.navigation_task: asyncio.Task[None] | None = None
@@ -94,6 +98,7 @@ class LiveSession:
                 "console": len(self.console_messages),
                 "page_errors": len(self.page_errors),
                 "downloads": len(self.downloads),
+                "websockets": len(self.websockets),
             },
             "recent_requests": list(reversed(self.network_events["requests"][-8:])),
             "recent_console": list(reversed(self.console_messages[-5:])),
@@ -250,6 +255,7 @@ class LiveSession:
         self.page.on("console", record_console)
         self.page.on("pageerror", record_page_error)
         self.page.on("download", schedule_download)
+        install_websocket_observer(self.page, self.websockets)
 
     async def stop(self) -> QuickScanResult:
         if self.status == "stopped":
@@ -267,6 +273,7 @@ class LiveSession:
                 self.result.html_path = str(page_html)
                 self.result.html_sha256 = hashlib.sha256(html.encode("utf-8")).hexdigest()
                 self.result.links_count = await self.page.locator("a[href]").count()
+                self.browser_storage = await capture_browser_storage(self.context)
             except Exception as error:
                 self.error = f"{type(error).__name__}: {error}"
                 self.result.error = self.error
@@ -290,6 +297,12 @@ class LiveSession:
         self.result.console_messages_count = len(self.console_messages)
         self.result.page_errors_count = len(self.page_errors)
         self.result.downloads_count = len(self.downloads)
+        self.result.cookies_count = len(self.browser_storage["cookies"])
+        self.result.storage_entries_count = sum(
+            len(origin["local_storage"]) + len(origin["session_storage"])
+            for origin in self.browser_storage["origins"]
+        )
+        self.result.websockets_count = len(self.websockets)
         write_json(self.output_dir / "network.json", self.network_events)
         write_json(self.output_dir / "redirects.json", {"redirects": self.redirects})
         write_json(
@@ -297,6 +310,8 @@ class LiveSession:
             {"messages": self.console_messages, "page_errors": self.page_errors},
         )
         write_json(self.output_dir / "downloads.json", {"downloads": self.downloads})
+        write_json(self.output_dir / "storage.json", self.browser_storage)
+        write_json(self.output_dir / "websockets.json", {"websockets": self.websockets})
         write_json(
             self.output_dir / "summary.json",
             build_scan_summary(
@@ -306,6 +321,8 @@ class LiveSession:
                 self.console_messages,
                 self.page_errors,
                 self.downloads,
+                self.browser_storage,
+                self.websockets,
             ),
         )
         write_json(

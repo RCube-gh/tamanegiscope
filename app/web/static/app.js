@@ -76,6 +76,9 @@ function renderSummary(summary) {
     console: stats.console_messages,
     errors: stats.page_errors,
     downloads: stats.downloads,
+    cookies: stats.cookies,
+    storage: stats.storage_entries,
+    websockets: stats.websockets,
   };
   for (const [name, value] of Object.entries(values)) {
     document.querySelector(`[data-stat="${name}"]`).textContent = displayValue(value);
@@ -146,6 +149,9 @@ async function renderResult(scan) {
     console: scan.console_messages_count,
     errors: scan.page_errors_count,
     downloads: scan.downloads_count,
+    cookies: scan.cookies_count,
+    storage: scan.storage_entries_count,
+    websockets: scan.websockets_count,
   };
   for (const [name, value] of Object.entries(initialStats)) {
     document.querySelector(`[data-stat="${name}"]`).textContent = displayValue(value);
@@ -228,6 +234,7 @@ function renderLiveObservations(observations) {
   setText("#live-console", stats.console);
   setText("#live-errors", stats.page_errors);
   setText("#live-downloads", stats.downloads);
+  setText("#live-websockets", stats.websockets);
 
   const feed = document.querySelector("#live-request-feed");
   feed.replaceChildren();
