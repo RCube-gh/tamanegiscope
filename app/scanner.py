@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections import Counter, defaultdict
 import hashlib
 import ipaddress
 import json
@@ -52,6 +53,14 @@ def load_scan_result(scan_id: str) -> QuickScanResult:
     return QuickScanResult.model_validate(data)
 
 
+def load_scan_summary(scan_id: str) -> dict[str, Any]:
+    summary = scan_directory(scan_id) / "summary.json"
+    try:
+        return json.loads(summary.read_text(encoding="utf-8"))
+    except FileNotFoundError as error:
+        raise ScanNotFoundError(scan_id) from error
+
+
 def list_artifacts(scan_id: str) -> ScanArtifacts:
     directory = scan_directory(scan_id)
     artifacts = []
@@ -85,6 +94,112 @@ def redacted_headers(headers: dict[str, str]) -> dict[str, str]:
 
 def write_json(path: Path, contents: Any) -> None:
     path.write_text(json.dumps(contents, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def hostname(value: str) -> str | None:
+    try:
+        return urlsplit(value).hostname
+    except ValueError:
+        return None
+
+
+def build_scan_summary(
+    result: QuickScanResult,
+    network_events: dict[str, list[dict[str, Any]]],
+    redirects: list[dict[str, Any]],
+    console_messages: list[dict[str, Any]],
+    page_errors: list[dict[str, str]],
+    downloads: list[dict[str, Any]],
+) -> dict[str, Any]:
+    domain_data: dict[str, dict[str, Any]] = defaultdict(
+        lambda: {"requests": 0, "responses": 0, "failed": 0, "ips": set(), "statuses": Counter()}
+    )
+    ip_data: dict[str, dict[str, Any]] = defaultdict(lambda: {"responses": 0, "domains": set()})
+    resource_types = Counter()
+    status_codes = Counter()
+
+    for entry in network_events["requests"]:
+        target = hostname(entry["url"])
+        resource_types[entry.get("resource_type", "other")] += 1
+        if target:
+            domain_data[target]["requests"] += 1
+
+    for entry in network_events["responses"]:
+        target = hostname(entry["url"])
+        status = entry.get("status")
+        if status is not None:
+            status_codes[str(status)] += 1
+        if not target:
+            continue
+        domain_data[target]["responses"] += 1
+        if status is not None:
+            domain_data[target]["statuses"][str(status)] += 1
+        address = entry.get("server_address") or {}
+        ip = address.get("ipAddress") if isinstance(address, dict) else None
+        if ip:
+            domain_data[target]["ips"].add(ip)
+            ip_data[ip]["responses"] += 1
+            ip_data[ip]["domains"].add(target)
+
+    for entry in network_events["failed_requests"]:
+        target = hostname(entry["url"])
+        if target:
+            domain_data[target]["failed"] += 1
+
+    domains = [
+        {
+            "domain": domain,
+            "requests": values["requests"],
+            "responses": values["responses"],
+            "failed": values["failed"],
+            "ips": sorted(values["ips"]),
+            "statuses": dict(sorted(values["statuses"].items())),
+        }
+        for domain, values in domain_data.items()
+    ]
+    domains.sort(key=lambda item: (-item["requests"], item["domain"]))
+    ips = [
+        {"ip": ip, "responses": values["responses"], "domains": sorted(values["domains"])}
+        for ip, values in ip_data.items()
+    ]
+    ips.sort(key=lambda item: (-item["responses"], item["ip"]))
+    primary_response = next(
+        (entry for entry in reversed(network_events["responses"]) if entry["url"] == result.final_url), None
+    )
+
+    return {
+        "scan_id": result.scan_id,
+        "stats": {
+            "requests": len(network_events["requests"]),
+            "responses": len(network_events["responses"]),
+            "failed_requests": len(network_events["failed_requests"]),
+            "blocked_requests": len(network_events["blocked_requests"]),
+            "domains": len(domains),
+            "ips": len(ips),
+            "redirects": len(redirects),
+            "links": result.links_count or 0,
+            "console_messages": len(console_messages),
+            "page_errors": len(page_errors),
+            "downloads": len(downloads),
+        },
+        "resource_types": [
+            {"type": resource_type, "count": count}
+            for resource_type, count in resource_types.most_common()
+        ],
+        "status_codes": [{"status": status, "count": count} for status, count in status_codes.most_common()],
+        "domains": domains,
+        "ips": ips,
+        "redirects": redirects,
+        "console": {
+            "levels": [
+                {"level": level, "count": count}
+                for level, count in Counter(message["type"] for message in console_messages).most_common()
+            ],
+            "messages": console_messages,
+            "page_errors": page_errors,
+        },
+        "primary_response": primary_response,
+    }
 
 
 def resolve_network(url: str, requested: NetworkMode) -> NetworkMode:
@@ -306,6 +421,10 @@ async def run_quick_scan(request: QuickScanRequest) -> QuickScanResult:
     write_json(output_dir / "redirects.json", {"redirects": redirects})
     write_json(output_dir / "console.json", {"messages": console_messages, "page_errors": page_errors})
     write_json(output_dir / "downloads.json", {"downloads": downloads})
+    write_json(
+        output_dir / "summary.json",
+        build_scan_summary(result, network_events, redirects, console_messages, page_errors, downloads),
+    )
     metadata = output_dir / "metadata.json"
     write_json(
         metadata,

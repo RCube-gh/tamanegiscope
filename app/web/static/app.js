@@ -31,6 +31,92 @@ function addMetadata(label, value) {
   metadata.append(term, definition);
 }
 
+function setText(selector, value) {
+  document.querySelector(selector).textContent = displayValue(value);
+}
+
+function populateRows(selector, rows, values, emptyMessage) {
+  const body = document.querySelector(selector);
+  body.replaceChildren();
+  if (values.length === 0) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = rows;
+    cell.className = "empty-row";
+    cell.textContent = emptyMessage;
+    row.append(cell);
+    body.append(row);
+    return;
+  }
+  for (const valuesForRow of values) {
+    const row = document.createElement("tr");
+    for (const value of valuesForRow) {
+      const cell = document.createElement("td");
+      cell.textContent = displayValue(value);
+      row.append(cell);
+    }
+    body.append(row);
+  }
+}
+
+function renderSummary(summary) {
+  const stats = summary.stats;
+  const values = {
+    requests: stats.requests,
+    domains: stats.domains,
+    ips: stats.ips,
+    redirects: stats.redirects,
+    links: stats.links,
+    failed: stats.failed_requests,
+    console: stats.console_messages,
+    errors: stats.page_errors,
+    downloads: stats.downloads,
+  };
+  for (const [name, value] of Object.entries(values)) {
+    document.querySelector(`[data-stat="${name}"]`).textContent = displayValue(value);
+  }
+
+  setText("#domain-count", `${stats.domains} domains`);
+  setText("#ip-count", `${stats.ips} IPs`);
+  setText("#redirect-count", `${stats.redirects} redirects`);
+  setText("#console-count", `${stats.console_messages} messages`);
+  setText("#page-error-count", `${stats.page_errors} errors`);
+
+  populateRows("#domain-table", 4, summary.domains.map((domain) => [
+    domain.domain,
+    domain.requests,
+    domain.ips.join(", ") || "—",
+    Object.entries(domain.statuses).map(([status, count]) => `${status} ×${count}`).join(", ") || "—",
+  ]), "No network domains captured.");
+  populateRows("#ip-table", 3, summary.ips.map((ip) => [
+    ip.ip,
+    ip.responses,
+    ip.domains.join(", "),
+  ]), "No server IP addresses captured.");
+  populateRows("#redirect-table", 3, summary.redirects.map((redirect) => [
+    redirect.kind,
+    redirect.from_url,
+    redirect.to_url,
+  ]), "No redirects recorded.");
+  populateRows("#console-table", 2, summary.console.messages.map((message) => [
+    message.type,
+    message.text,
+  ]), "No console messages recorded.");
+  populateRows("#page-error-table", 1, summary.console.page_errors.map((error) => [error.message]), "No page errors recorded.");
+
+  const breakdown = document.querySelector("#network-breakdown");
+  breakdown.replaceChildren();
+  for (const item of [...summary.resource_types.map((entry) => [`${entry.type} requests`, entry.count]), ...summary.status_codes.map((entry) => [`HTTP ${entry.status}`, entry.count])]) {
+    const row = document.createElement("div");
+    const label = document.createElement("span");
+    const count = document.createElement("strong");
+    label.textContent = item[0];
+    count.textContent = item[1];
+    row.append(label, count);
+    breakdown.append(row);
+  }
+}
+
 async function renderResult(scan) {
   document.querySelector("#result-heading").textContent = scan.title || "Untitled page";
   const badge = document.querySelector("#result-status");
@@ -44,7 +130,7 @@ async function renderResult(scan) {
   addMetadata("HTML SHA-256", scan.html_sha256);
   addMetadata("Error", scan.error);
 
-  const stats = {
+  const initialStats = {
     requests: scan.requests_count,
     redirects: scan.redirects_count,
     links: scan.links_count,
@@ -52,7 +138,7 @@ async function renderResult(scan) {
     errors: scan.page_errors_count,
     downloads: scan.downloads_count,
   };
-  for (const [name, value] of Object.entries(stats)) {
+  for (const [name, value] of Object.entries(initialStats)) {
     document.querySelector(`[data-stat="${name}"]`).textContent = displayValue(value);
   }
 
@@ -83,6 +169,11 @@ async function renderResult(scan) {
       }
       artifactList.append(item);
     }
+  }
+
+  const summaryResponse = await fetch(`/scans/${encodeURIComponent(scan.scan_id)}/summary`);
+  if (summaryResponse.ok) {
+    renderSummary(await summaryResponse.json());
   }
 }
 

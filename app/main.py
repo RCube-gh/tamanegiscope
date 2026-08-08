@@ -10,6 +10,7 @@ from app.scanner import (
     TargetValidationError,
     list_artifacts,
     load_scan_result,
+    load_scan_summary,
     run_quick_scan,
     scan_artifact,
 )
@@ -43,6 +44,14 @@ async def get_scan(scan_id: str) -> QuickScanResult:
         return load_scan_result(scan_id)
     except ScanNotFoundError as error:
         raise HTTPException(status_code=404, detail="scan not found") from error
+
+
+@app.get("/scans/{scan_id}/summary")
+async def get_scan_summary(scan_id: str) -> dict:
+    try:
+        return load_scan_summary(scan_id)
+    except ScanNotFoundError as error:
+        raise HTTPException(status_code=404, detail="scan summary not found") from error
 
 
 @app.get("/scans/{scan_id}/artifacts", response_model=ScanArtifacts)

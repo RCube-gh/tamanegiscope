@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TamanegiScope</title>
-    <link rel="stylesheet" href="/static/styles.css?v=5">
-    <script defer src="/static/app.js?v=5"></script>
+    <link rel="stylesheet" href="/static/styles.css?v=6">
+    <script defer src="/static/app.js?v=6"></script>
   </head>
   <body>
     <main class="shell">
@@ -60,6 +60,9 @@
 
         <nav class="result-nav" aria-label="Scan result sections">
           <button class="result-tab active" type="button" data-tab="summary">Summary</button>
+          <button class="result-tab" type="button" data-tab="network">Network</button>
+          <button class="result-tab" type="button" data-tab="redirects">Redirects</button>
+          <button class="result-tab" type="button" data-tab="console">Console</button>
           <button class="result-tab" type="button" data-tab="screenshot">Screenshot</button>
           <button class="result-tab" type="button" data-tab="artifacts">Artifacts</button>
         </nav>
@@ -75,8 +78,11 @@
                 <p class="card-kicker">Page statistics</p>
                 <div class="stat-grid">
                   <div class="stat"><strong data-stat="requests">—</strong><span>Requests</span></div>
+                  <div class="stat"><strong data-stat="domains">—</strong><span>Domains</span></div>
+                  <div class="stat"><strong data-stat="ips">—</strong><span>IPs</span></div>
                   <div class="stat"><strong data-stat="redirects">—</strong><span>Redirects</span></div>
                   <div class="stat"><strong data-stat="links">—</strong><span>Links</span></div>
+                  <div class="stat"><strong data-stat="failed">—</strong><span>Failed</span></div>
                   <div class="stat"><strong data-stat="console">—</strong><span>Console</span></div>
                   <div class="stat"><strong data-stat="errors">—</strong><span>Page errors</span></div>
                   <div class="stat"><strong data-stat="downloads">—</strong><span>Downloads</span></div>
@@ -91,6 +97,41 @@
             </section>
           </div>
         </div>
+
+        <section class="tab-panel analysis-panel" data-panel="network">
+          <div class="analysis-grid">
+            <section class="section-card">
+              <div class="card-title-row"><h3>Domains</h3><span id="domain-count">—</span></div>
+              <div class="table-wrap"><table><thead><tr><th>Domain</th><th>Req</th><th>IP</th><th>Status</th></tr></thead><tbody id="domain-table"></tbody></table></div>
+            </section>
+            <section class="section-card">
+              <div class="card-title-row"><h3>Network overview</h3><span>Captured traffic</span></div>
+              <div class="breakdown" id="network-breakdown"></div>
+              <div class="card-title-row subheading"><h3>IP addresses</h3><span id="ip-count">—</span></div>
+              <div class="table-wrap"><table><thead><tr><th>IP</th><th>Responses</th><th>Domains</th></tr></thead><tbody id="ip-table"></tbody></table></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="tab-panel analysis-panel" data-panel="redirects">
+          <section class="section-card table-card">
+            <div class="card-title-row"><h3>Redirect chain</h3><span id="redirect-count">—</span></div>
+            <div class="table-wrap"><table><thead><tr><th>Type</th><th>From</th><th>To</th></tr></thead><tbody id="redirect-table"></tbody></table></div>
+          </section>
+        </section>
+
+        <section class="tab-panel analysis-panel" data-panel="console">
+          <div class="analysis-grid console-grid">
+            <section class="section-card">
+              <div class="card-title-row"><h3>Console messages</h3><span id="console-count">—</span></div>
+              <div class="table-wrap"><table><thead><tr><th>Level</th><th>Message</th></tr></thead><tbody id="console-table"></tbody></table></div>
+            </section>
+            <section class="section-card">
+              <div class="card-title-row"><h3>Page errors</h3><span id="page-error-count">—</span></div>
+              <div class="table-wrap"><table><thead><tr><th>Error</th></tr></thead><tbody id="page-error-table"></tbody></table></div>
+            </section>
+          </div>
+        </section>
 
         <section class="tab-panel screenshot-panel" data-panel="screenshot">
           <section class="section-card">

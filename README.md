@@ -17,6 +17,7 @@ The runner does not commit or push scan artifacts to GitHub.
 GET  /health
 POST /scans/quick
 GET  /scans/{scan_id}
+GET  /scans/{scan_id}/summary
 GET  /scans/{scan_id}/artifacts
 GET  /scans/{scan_id}/screenshot
 GET  /scans/{scan_id}/html
