@@ -8,6 +8,7 @@ const liveScanButton = document.querySelector("#live-scan-button");
 const liveSessionPanel = document.querySelector("#live-session-panel");
 const stopLiveScanButton = document.querySelector("#stop-live-scan-button");
 let activeLiveScanId = null;
+let liveObservationTimer = null;
 
 function show(element, visible) {
   element.classList.toggle("hidden", !visible);
@@ -215,6 +216,58 @@ function renderLiveSession(session) {
   const link = document.querySelector("#live-browser-link");
   link.href = liveViewerUrl();
   link.textContent = "Open remote browser ↗";
+  document.querySelector("#live-browser-frame").src = liveViewerUrl();
+}
+
+function renderLiveObservations(observations) {
+  setText("#live-session-url", observations.current_url);
+  const stats = observations.stats;
+  setText("#live-requests", stats.requests);
+  setText("#live-domains", stats.domains);
+  setText("#live-redirects", stats.redirects);
+  setText("#live-console", stats.console);
+  setText("#live-errors", stats.page_errors);
+  setText("#live-downloads", stats.downloads);
+
+  const feed = document.querySelector("#live-request-feed");
+  feed.replaceChildren();
+  if (observations.recent_requests.length === 0) {
+    const item = document.createElement("li");
+    item.textContent = "Waiting for browser traffic…";
+    feed.append(item);
+    return;
+  }
+  for (const request of observations.recent_requests) {
+    const item = document.createElement("li");
+    const label = document.createElement("strong");
+    label.textContent = `${request.method} · ${request.resource_type}`;
+    const url = document.createElement("span");
+    url.textContent = request.url;
+    item.append(label, url);
+    feed.append(item);
+  }
+}
+
+async function updateLiveObservations() {
+  if (!activeLiveScanId) return;
+  try {
+    const response = await fetch(`/scans/live/${encodeURIComponent(activeLiveScanId)}/observations`);
+    if (!response.ok) return;
+    renderLiveObservations(await response.json());
+  } catch {
+    // A transient poll failure should not interrupt the manual browser session.
+  }
+}
+
+function startLiveObservationPolling() {
+  if (liveObservationTimer !== null) clearInterval(liveObservationTimer);
+  updateLiveObservations();
+  liveObservationTimer = setInterval(updateLiveObservations, 1500);
+}
+
+function stopLiveObservationPolling() {
+  if (liveObservationTimer !== null) clearInterval(liveObservationTimer);
+  liveObservationTimer = null;
 }
 
 form.addEventListener("submit", async (event) => {
@@ -273,6 +326,8 @@ liveScanButton.addEventListener("click", async () => {
     if (session.status !== "active") throw new Error(session.error || "Live Scan could not start");
     renderLiveSession(session);
     show(liveSessionPanel, true);
+    document.body.classList.add("showing-live");
+    startLiveObservationPolling();
   } catch (error) {
     document.querySelector("#error-message").textContent = error.message;
     show(errorPanel, true);
@@ -295,6 +350,8 @@ stopLiveScanButton.addEventListener("click", async () => {
     await renderResult(scan);
     show(liveSessionPanel, false);
     show(resultPanel, true);
+    stopLiveObservationPolling();
+    document.body.classList.remove("showing-live");
     document.body.classList.add("showing-result");
     activeLiveScanId = null;
   } catch (error) {
@@ -310,6 +367,8 @@ checkHealth();
 
 document.querySelector("#new-scan-button").addEventListener("click", () => {
   document.body.classList.remove("showing-result");
+  document.body.classList.remove("showing-live");
+  stopLiveObservationPolling();
   show(resultPanel, false);
   show(liveSessionPanel, false);
   document.querySelector("#target-url").focus();

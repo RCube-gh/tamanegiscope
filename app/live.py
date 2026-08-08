@@ -73,6 +73,29 @@ class LiveSession:
             error=self.error,
         )
 
+    def observations(self) -> dict[str, Any]:
+        domains = {
+            target
+            for event in self.network_events["requests"]
+            if (target := hostname(event["url"])) is not None
+        }
+        return {
+            "scan_id": self.scan_id,
+            "status": self.status,
+            "current_url": self.page.url if self.page is not None else self.result.final_url,
+            "stats": {
+                "requests": len(self.network_events["requests"]),
+                "responses": len(self.network_events["responses"]),
+                "domains": len(domains),
+                "redirects": len(self.redirects),
+                "console": len(self.console_messages),
+                "page_errors": len(self.page_errors),
+                "downloads": len(self.downloads),
+            },
+            "recent_requests": list(reversed(self.network_events["requests"][-8:])),
+            "recent_console": list(reversed(self.console_messages[-5:])),
+        }
+
     async def start(self) -> LiveScanSession:
         self.output_dir.mkdir(parents=True, exist_ok=False)
         try:
@@ -315,6 +338,11 @@ class LiveSessionManager:
             if self.session is None or self.session.scan_id != scan_id:
                 raise LiveScanError("live scan session not found")
             return await self.session.stop()
+
+    async def observations(self, scan_id: str) -> dict[str, Any]:
+        if self.session is None or self.session.scan_id != scan_id:
+            raise LiveScanError("live scan session not found")
+        return self.session.observations()
 
     async def shutdown(self) -> None:
         async with self.lock:

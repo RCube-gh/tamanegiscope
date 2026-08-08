@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TamanegiScope</title>
-    <link rel="stylesheet" href="/static/styles.css?v=9">
-    <script defer src="/static/app.js?v=9"></script>
+    <link rel="stylesheet" href="/static/styles.css?v=10">
+    <script defer src="/static/app.js?v=10"></script>
   </head>
   <body>
     <main class="shell">
@@ -50,21 +50,44 @@
       </section>
 
       <section class="live-session panel hidden" id="live-session-panel" aria-live="polite">
-        <div class="section-heading">
+        <div class="section-heading live-header">
           <div>
             <p class="eyebrow">LIVE SCAN ACTIVE</p>
             <h2>Remote browser is ready</h2>
           </div>
           <span class="status-dot online" id="live-session-status">Active</span>
         </div>
-        <p class="subtitle">Open the remote browser in a new tab, operate it normally, then return here to capture the session.</p>
-        <dl class="metadata live-metadata">
-          <dt>Session ID</dt><dd id="live-session-id">—</dd>
-          <dt>Network</dt><dd id="live-session-network">—</dd>
-          <dt>Current URL</dt><dd id="live-session-url">—</dd>
-        </dl>
+        <div class="live-workspace">
+          <section class="live-browser-card">
+            <div class="card-title-row">
+              <div><h3>Remote browser</h3><span>Interactive Chromium · remote runner</span></div>
+              <a id="live-browser-link" class="text-link" target="_blank" rel="noopener">Open separately ↗</a>
+            </div>
+            <iframe id="live-browser-frame" title="Remote Chromium browser" allow="clipboard-read; clipboard-write"></iframe>
+          </section>
+          <aside class="live-insights">
+            <section class="section-card live-overview-card">
+              <div class="card-title-row"><h3>Live observation</h3><span id="live-session-network">—</span></div>
+              <dl class="metadata live-metadata">
+                <dt>Session ID</dt><dd id="live-session-id">—</dd>
+                <dt>Current URL</dt><dd id="live-session-url">—</dd>
+              </dl>
+              <div class="live-stat-grid">
+                <div><strong id="live-requests">0</strong><span>Requests</span></div>
+                <div><strong id="live-domains">0</strong><span>Domains</span></div>
+                <div><strong id="live-redirects">0</strong><span>Redirects</span></div>
+                <div><strong id="live-console">0</strong><span>Console</span></div>
+                <div><strong id="live-errors">0</strong><span>Errors</span></div>
+                <div><strong id="live-downloads">0</strong><span>Downloads</span></div>
+              </div>
+            </section>
+            <section class="section-card live-feed-card">
+              <div class="card-title-row"><h3>Latest requests</h3><span>Updates every 1.5 s</span></div>
+              <ul id="live-request-feed" class="live-feed"></ul>
+            </section>
+          </aside>
+        </div>
         <div class="live-actions">
-          <a id="live-browser-link" class="live-browser-link" target="_blank" rel="noopener">Open remote browser</a>
           <button id="stop-live-scan-button" class="stop-live-button" type="button">Stop &amp; capture session</button>
         </div>
         <p class="hint">The remote browser is displayed through the Codespaces 6080 port. Its activity is recorded until you stop this session.</p>

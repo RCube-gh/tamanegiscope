@@ -58,6 +58,14 @@ async def get_live_scan(scan_id: str) -> LiveScanSession:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
 
+@app.get("/scans/live/{scan_id}/observations")
+async def get_live_observations(scan_id: str) -> dict:
+    try:
+        return await live_sessions.observations(scan_id)
+    except LiveScanError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
 @app.post("/scans/live/{scan_id}/stop", response_model=QuickScanResult)
 async def stop_live_scan(scan_id: str) -> QuickScanResult:
     try:
