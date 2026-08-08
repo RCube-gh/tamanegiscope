@@ -1,8 +1,9 @@
 {
   "name": "tamanegiscope-runner",
   "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
-  "postCreateCommand": "sudo rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarnpkg.list && sudo apt-get update && sudo apt-get install -y --no-install-recommends tor xvfb fluxbox x11vnc novnc websockify && python -m pip install -r requirements.txt && python -m playwright install --with-deps chromium",
+  "postCreateCommand": "sudo rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarnpkg.list && sudo install -d -m 1777 /tmp/.X11-unix && sudo apt-get update && sudo apt-get install -y --no-install-recommends tor xvfb fluxbox x11vnc novnc websockify && python -m pip install -r requirements.txt && python -m playwright install --with-deps chromium && bash .devcontainer/start-services.sh",
   "postStartCommand": "bash .devcontainer/start-services.sh",
+  "postAttachCommand": "bash .devcontainer/start-services.sh",
   "forwardPorts": [8000, 6080],
   "portsAttributes": {
     "8000": {
